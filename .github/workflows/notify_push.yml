@@ -14,7 +14,7 @@ jobs:
       uses: appleboy/discord-action@0.0.3
       with:
         webhook_id: 1325495356678733954
-        webhook_token: 0VMcWQ3rDsKESHLK8NDJ46aghPigyWfRhEocURX1ySlMPE3VEO2nQYIR6AtiXAxNDXVB
+        webhook_token: "0VMcWQ3rDsKESHLK8NDJ46aghPigyWfRhEocURX1ySlMPE3VEO2nQYIR6AtiXAxNDXVB"
         color: "#E74C3C"
         username: "GitHubの神様"
         args: ${{ github.actor }}が${{ github.event_name }}しました！関東ブロック勝ちましょう△△

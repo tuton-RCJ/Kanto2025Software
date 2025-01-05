@@ -38,7 +38,7 @@ int Kd = 0;
 int Ki = 0;
 int lastError = 0;
 int sumError = 0;
-int speed = 30;
+int speed = 50;
 
 void init_i2c()
 {
@@ -57,7 +57,7 @@ void setup()
 
   tof.init();
 
-  //line.setBrightness(48);
+  // line.setBrightness(48);
   loadcell.init();
 
   // TurningObject = false;
@@ -80,27 +80,28 @@ void setup()
 
 void loop()
 {
-  
-  // tof.getTofValues();
-  // for(int i = 0; i < 7; i++){
-  //   uart1.print(tof.tof_values[i]);
-  //   uart1.print(" ");
-  // } 
-  // uart1.println();
-  // return;
+  // loadcell.read();
+  // uart1.print(loadcell.values[0]);
+  // uart1.print(" ");
+  // uart1.println(loadcell.values[1]);
+
+  tof.getTofValues();
+  for(int i = 0; i < 7; i++){
+    uart1.print(tof.tof_values[i]);
+    uart1.print(" ");
+  }
+  uart1.println();
+  return;
   if (digitalRead(StartSwitch) == HIGH)
   {
     sts3032.stop();
-    uart1.println("stop");
     return;
   }
 
-
   line.read();
 
-  
+  uart1.println(line.LastColorL);
 
-  loadcell.read();
   if (TurningObject)
   {
     tof.getTofValues();
@@ -111,7 +112,7 @@ void loop()
   LineTrace();
   CheckRed();
   CheckGreen();
-  CheckObject();
+  // CheckObject();
 }
 
 void LineTrace()
@@ -150,7 +151,7 @@ void CheckRed()
 
 void CheckGreen()
 {
-  if (millis() - line.colorLTime[0] < 10 || millis() - line.colorRTime[0] < 10 && line._frontPhotoReflector)
+  if ((line.LastColorL == 0 || line.LastColorR == 0) && line._frontPhotoReflector)
   {
     int p = 0;
     if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)

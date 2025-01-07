@@ -92,6 +92,17 @@ void Buzzer::GreenMarker(int p)
         beep(C5, 0.5);
     }
 }
+void Buzzer::EnterEvacuationZone(){
+    _bpm = 300;
+    beep(C5, 0.5);
+    beep(E5, 0.5);
+    beep(G5, 0.5);
+    beep(F5, 0.5);
+    beep(E5, 0.5);
+    beep(G5, 0.5);
+    beep(C6, 0.5);
+
+} 
 
 void Buzzer::kouka()
 {

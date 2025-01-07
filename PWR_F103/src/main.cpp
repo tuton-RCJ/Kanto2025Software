@@ -15,7 +15,7 @@
 ToF tof(PA15, PB15);
 
 HardwareSerial Serial1(PA10, PA9);
-HardwareSerial Serial3(PB11, PB10);
+HardwareSerial uart3(PB11, PB10);
 
 Servo servoHandLeft;
 Servo servoHandRight;
@@ -108,41 +108,39 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   tof.getTofValues();
-  Serial1.print(tof.tof_values[0]);
-  Serial1.print(" ");
-  Serial1.println(tof.tof_values[1]);
+  // Serial1.print(tof.tof_values[0]);
+  // Serial1.print(" ");
+  // Serial1.println(tof.tof_values[1]);
 
   uart3.print(tof.tof_values[0]);
   uart3.print(" ");
   uart3.println(tof.tof_values[1]);
 
   if(uart3.available()){
-    string data = uart3.readString();
-    switch(data){
-      case "HandClose":
-        HandClose();
-        break;
-      case "HandOpen":
-        HandOpen();
-        break;
-      case "ArmUp":
-        ArmUp();
-        break;
-      case "ArmDown":
-        ArmDown();
-        break;
-      case "BasketClose":
-        BasketClose();
-        break;
-      case "BasketOpen":
-        BasketOpen();
-        break;
-      case "AttachServo":
-        AttachServo();
-        break;
-      case "DetachServo":
-        DetachServo();
-        break;
+    String data = uart3.readString();
+    if(data=="HandClose"){
+      HandClose();
+    }
+    if(data=="HandOpen"){
+      HandOpen();
+    }
+    if(data=="ArmUp"){
+      ArmUp();
+    }
+    if(data=="ArmDown"){
+      ArmDown();
+    }
+    if(data=="BasketClose"){
+      BasketClose();
+    }
+    if(data=="BasketOpen"){
+      BasketOpen();
+    }
+    if(data=="AttachServo"){
+      AttachServo();
+    }
+    if(data=="DetachServo"){
+      DetachServo();
     }
   }
   // ArmDown();

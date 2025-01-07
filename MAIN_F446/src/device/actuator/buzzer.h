@@ -11,6 +11,7 @@ public:
     void mute();
     void kouka();
     void boot();
+    void EnterEvacuationZone();
     void ObjectDetected();
     void GreenMarker(int p);
     const bool isDisabled = false;

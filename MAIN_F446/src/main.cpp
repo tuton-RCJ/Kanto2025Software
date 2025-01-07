@@ -20,7 +20,11 @@ LineUnit line(&uart2);
 STS3032 sts3032(&uart3);
 ToF tof(PA5, PA6, PA7, PA8, PA12, PA13, PA14);
 
+TwoWire Wire2(PB3, PB10);
+
 BNO055 bno(55, &Wire);
+
+MPU6050 mpu6050(&Wire2);
 
 void LineTrace();
 void CheckRed();
@@ -31,20 +35,31 @@ bool TurningObject = false;
 void TurnObject();
 
 // FOR LINETRACE
-int Kps[15] = {-4, -4, -3, -3, -3, -2, -2, 0, 2, 2, 3, 3, 3, 4, 4};
+int Kps[15] = {-8, -8, -6, -4, -3, -2, -2, 0, 2, 2, 3, 4, 6, 8, 8};
 int threshold = 800;
-int Kp = 12;
+int silver_threshould = 100;
+int Kp = 16;
 int Kd = 0;
 int Ki = 0;
 int lastError = 0;
 int sumError = 0;
-int speed = 50;
+int speed = 30;
+int normalSpeed = 40;
+
+int SlopeStatus = 0; // 0:平坦 1:上り 2:下り
+
+float heading, pitch, roll;
+
+void setSlopeStatus();
+
+bool isRescue = false;
 
 void init_i2c()
 {
-  Wire.setSCL(I2C_SCL);
   Wire.setSDA(I2C_SDA);
+  Wire.setSCL(I2C_SCL);
   Wire.begin();
+  Wire2.begin();
 }
 
 void setup()
@@ -65,42 +80,32 @@ void setup()
   // buzzer.kouka();
   // sts3032.drive(40, 0);
 
-  // // センサーの初期化
-  // if (!bno.begin())
-  // {
-  //   uart1.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-  //   while (1)
-  //     ;
-  // }
+  // センサーの初期化
+  if (!bno.begin())
+  {
+    uart1.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while (1)
+      ;
+  }
 
   // Serial.println("success");
   pinMode(StartSwitch, INPUT);
   buzzer.boot();
+  sumError = 0;
+  mpu6050.init();
+
+  isRescue=false;
 }
 
 void loop()
 {
-  // loadcell.read();
-  // uart1.print(loadcell.values[0]);
-  // uart1.print(" ");
-  // uart1.println(loadcell.values[1]);
+  line.read();
 
-  tof.getTofValues();
-  for(int i = 0; i < 7; i++){
-    uart1.print(tof.tof_values[i]);
-    uart1.print(" ");
-  }
-  uart1.println();
-  return;
   if (digitalRead(StartSwitch) == HIGH)
   {
     sts3032.stop();
     return;
   }
-
-  line.read();
-
-  uart1.println(line.LastColorL);
 
   if (TurningObject)
   {
@@ -109,10 +114,15 @@ void loop()
     return;
   }
 
+
+
   LineTrace();
   CheckRed();
   CheckGreen();
-  // CheckObject();
+
+  CheckObject();
+  bno.readEulerAngles(heading, pitch, roll);
+  setSlopeStatus();
 }
 
 void LineTrace()
@@ -127,10 +137,23 @@ void LineTrace()
     {
       error += Kps[i];
     }
+
+    if (line._photoReflector[i] < silver_threshould)
+    {
+      isRescue = true;
+      sts3032.stop();
+      buzzer.EnterEvacuationZone();
+      return;
+    }
   }
-  if (abs(error) > 10 && line._frontPhotoReflector > threshold)
+  if (abs(error) > 20 && line._frontPhotoReflector > threshold)
   {
     error = 0;
+    speed = 20;
+  }
+  else
+  {
+    speed = normalSpeed;
   }
   sumError += error;
   pid = Kp * error + Ki * sumError + Kd * (error - lastError);
@@ -151,7 +174,7 @@ void CheckRed()
 
 void CheckGreen()
 {
-  if ((line.LastColorL == 0 || line.LastColorR == 0) && line._frontPhotoReflector)
+  if ((line._photoReflector[2] > threshold || line._photoReflector[12] > threshold) && line._frontPhotoReflector)
   {
     int p = 0;
     if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)
@@ -196,28 +219,29 @@ void CheckGreen()
 
 void CheckObject()
 {
-  bool flag = false;
-  for (int i = 2; i < 7; i++)
-  {
-    if (tof.tof_values[i] < 100)
-    {
-      flag = true;
-    }
-  }
-  if (flag)
-  {
-    speed = 30;
-  }
-  else
-  {
-    speed = 30;
-  }
-  if (loadcell.values[0] > 600 || loadcell.values[1] > 600)
+  // bool flag = false;
+  // for (int i = 2; i < 7; i++)
+  // {
+  //   if (tof.tof_values[i] < 100)
+  //   {
+  //     flag = true;
+  //   }
+  // }
+  // if (flag)
+  // {
+  //   speed = 30;
+  // }
+  // else
+  // {
+  //   speed = 50;
+  // }
+  loadcell.read();
+  if (loadcell.values[0] > 150 || loadcell.values[1] > 150)
   {
     sts3032.stop();
     buzzer.ObjectDetected();
-    sts3032.drive(-speed, 0);
-    delay(200);
+    sts3032.drive(-50, 0);
+    delay(500);
     sts3032.turn(50, 90);
     TurningObject = true;
   }
@@ -225,7 +249,7 @@ void CheckObject()
 
 void TurnObject()
 {
-  if (tof.tof_values[1] < 160)
+  if (tof.tof_values[1] < 120)
   {
     buzzer.beep(440, 0.5);
     sts3032.drive(40, 0);
@@ -249,5 +273,23 @@ void TurnObject()
     buzzer.ObjectDetected();
     sts3032.turn(50, 60);
     TurningObject = false;
+  }
+}
+
+void setSlopeStatus()
+{
+  if (pitch > 15)
+  {
+    SlopeStatus = 1;
+    buzzer.beep(392, 0.5);
+  }
+  else if (pitch < -15)
+  {
+    SlopeStatus = 2;
+    buzzer.beep(262, 0.5);
+  }
+  else
+  {
+    SlopeStatus = 0;
   }
 }

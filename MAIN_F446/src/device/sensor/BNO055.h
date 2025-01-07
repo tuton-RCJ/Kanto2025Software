@@ -10,7 +10,8 @@ public:
     bool begin();
     bool isCalibrated();
 
-    bool readEulerAngles(float &heading, float &pitch, float &roll);
+    bool readEulerAngles();
+    float heading, pitch, roll;
 
 private:
     Adafruit_BNO055 _bno;

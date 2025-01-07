@@ -12,7 +12,7 @@ bool BNO055::isCalibrated() {
     return (system == 3 && gyro == 3 && accel == 3 && mag == 3);
 }
 
-bool BNO055::readEulerAngles(float &heading, float &pitch, float &roll) {
+bool BNO055::readEulerAngles() {
     imu::Vector<3> euler = _bno.getVector(Adafruit_BNO055::VECTOR_EULER);
     heading = euler.x();
     pitch = euler.y();

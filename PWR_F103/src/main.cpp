@@ -90,8 +90,9 @@ void DetachServo()
 
 void setup()
 {
-  // put your setup code here, to run once:
+
   Serial1.begin(115200);
+  uart3.begin(115200);
   init_i2c();
   tof.init();
   delay(100);
@@ -106,7 +107,7 @@ void setup()
 
 void loop()
 {
-  // put your main code here, to run repeatedly:
+
   tof.getTofValues();
   // Serial1.print(tof.tof_values[0]);
   // Serial1.print(" ");
@@ -117,7 +118,8 @@ void loop()
   uart3.println(tof.tof_values[1]);
 
   if(uart3.available()){
-    String data = uart3.readString();
+    String data = uart3.readStringUntil('\n');
+    data.trim();
     if(data=="HandClose"){
       HandClose();
     }
@@ -142,6 +144,7 @@ void loop()
     if(data=="DetachServo"){
       DetachServo();
     }
+    Serial1.print(data);
   }
   // ArmDown();
   // delay(1000);

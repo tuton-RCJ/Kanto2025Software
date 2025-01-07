@@ -1,24 +1,26 @@
-// #ifndef microservo_H
-// #define microservo_H
+#ifndef microservo_H
+#define microservo_H
 
-// #include <Arduino.h>
+#include <Arduino.h>
 
-// class microservo
-// {
-// public:
-//     microservo(int pin);
-//     void setAngle(int angle);
-//     void moveToAngle(int targetAngle, int duration);
-//     const bool isDisabled = false;
+class Microservo
+{
+public:
+    Microservo(HardwareSerial *serial);
+    void HandClose();
+    void HandOpen();
+    void ArmUp();
+    void ArmDown();
+    void BasketClose();
+    void BasketOpen();
+    void AttachServo();
+    void DetachServo();
 
-// private:
-//     int _pin;
-//     int _angle;
-//     int _currentAngle;
-//     int _targetAngle;
-//     int _duration;
-//     unsigned long _startTime;
-//     unsigned long _endTime;
-// };
+    void initPos();
 
-// #endif
+private:
+    HardwareSerial *_serial;
+
+};
+
+#endif

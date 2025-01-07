@@ -4,6 +4,7 @@ LoadCell::LoadCell(int pinL, int pinR)
 {
     LoadcellPin[0] = pinL;
     LoadcellPin[1] = pinR;
+    init();
 }
 
 void LoadCell::init()

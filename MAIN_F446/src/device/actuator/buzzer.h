@@ -3,6 +3,12 @@
 
 #include <Arduino.h>
 
+struct Note
+{
+    int note;
+    double duration;
+};
+
 class Buzzer
 {
 public:
@@ -12,9 +18,10 @@ public:
     void kouka();
     void boot();
     void EnterEvacuationZone();
+    void PlayMusic(Note *notes, int length, int bpm);
     void ObjectDetected();
     void GreenMarker(int p);
-    const bool isDisabled = false;
+    volatile bool isDisabled = false;
 
 private:
     int _pin;

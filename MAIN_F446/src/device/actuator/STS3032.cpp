@@ -24,9 +24,10 @@ void STS3032::init()
 
 void STS3032::LeftDrive(int SpeedPercent, int acceleration)
 {
+
     int _SpeedPercent = constrain(SpeedPercent, -100, 100);
     int speed = _SpeedPercent * _maxSpeed / 100;
-
+    if(isDisabled) speed = 0;
     sms_sts.WriteSpe(1, speed, acceleration);
     sms_sts.WriteSpe(2, speed, acceleration);
 }
@@ -37,7 +38,7 @@ void STS3032::RightDrive(int SpeedPercent, int acceleration)
     int speed = _SpeedPercent * _maxSpeed / 100;
 
     speed = -speed;
-
+    if(isDisabled) speed = 0;
     sms_sts.WriteSpe(3, speed, acceleration);
     sms_sts.WriteSpe(4, speed, acceleration);
 }

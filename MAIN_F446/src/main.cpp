@@ -64,11 +64,6 @@ void setup()
   LineSetup();
 
   running = !digitalRead(StartSwitch);
-
-  // rescue
-  isRescue = true;
-  running = true;
-  RescueSetup();
   
 }
 
@@ -145,7 +140,7 @@ void onStartInterrupt()
 {
   running = true;
   hasReset = false;
-  isRescue = true;
+  isRescue = false;
   buzzer.isDisabled = false;
   sts3032.isDisabled = false;
 }
@@ -154,7 +149,7 @@ void onStopInterrupt()
 {
   running = false;
   hasReset = false;
-  isRescue = true;
+  isRescue = false;
   buzzer.isDisabled = true;
   sts3032.isDisabled = true;
   sts3032.stop();

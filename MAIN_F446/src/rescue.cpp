@@ -113,7 +113,6 @@ void RescueLoop()
             else
             {
                 buzzer.NotFound();
-                GoNextDetection();
             }
             return;
         }
@@ -185,7 +184,6 @@ void RescueLoop()
                 servo.ArmUp();
                 delay(1000);
                 servo.DetachServo();
-                SaveVictimCount++;
                 HaveVictim = true;
                 NearbyVictim = false;
                 VictimDetected = false;

@@ -27,7 +27,8 @@ void STS3032::LeftDrive(int SpeedPercent, int acceleration)
 
     int _SpeedPercent = constrain(SpeedPercent, -100, 100);
     int speed = _SpeedPercent * _maxSpeed / 100;
-    if(isDisabled) speed = 0;
+    if (isDisabled)
+        speed = 0;
     sms_sts.WriteSpe(1, speed, acceleration);
     sms_sts.WriteSpe(2, speed, acceleration);
 }
@@ -38,7 +39,8 @@ void STS3032::RightDrive(int SpeedPercent, int acceleration)
     int speed = _SpeedPercent * _maxSpeed / 100;
 
     speed = -speed;
-    if(isDisabled) speed = 0;
+    if (isDisabled)
+        speed = 0;
     sms_sts.WriteSpe(3, speed, acceleration);
     sms_sts.WriteSpe(4, speed, acceleration);
 }
@@ -52,6 +54,9 @@ void STS3032::stop()
     }
 }
 
+/// @brief 
+/// @param driveSpeedPercent -100~100
+/// @param turnRate -100~100
 void STS3032::drive(int driveSpeedPercent, int turnRate)
 {
     if (turnRate >= 100)
@@ -82,6 +87,19 @@ void STS3032::turn(int speed, int degree)
     float Deg360PerSpeed1 = 2.1f;
     float time = degree / 360.0f / speedPercent * Deg360PerSpeed1 * (degree > 0 ? 1 : -1);
     drive(speed, degree > 0 ? 100 : -100);
+    delay(time * 1000);
+    stop();
+}
+
+/// @brief
+/// @param speed 0~100
+/// @param distance  cm
+void STS3032::straight(int speed, int distance)
+{
+    float speedPercent = constrain(speed / 100.0f, -1, 1);
+    float Distance1cmPerSpeed1 = 0.5f;
+    float time = distance / 100.0f / speedPercent * Distance1cmPerSpeed1 * (distance > 0 ? 1 : -1);
+    drive(speed, 0);
     delay(time * 1000);
     stop();
 }

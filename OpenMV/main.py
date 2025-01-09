@@ -1,6 +1,4 @@
-
-
-import sensorz
+import sensor
 import time
 import ml
 from ml.utils import NMS
@@ -8,9 +6,10 @@ import math
 import image
 from pyb import UART
 import ustruct
+from machine import LED
 
 
-"""  todo 
+"""  todo
 輝度の自動調整をオフにする
 メインマイコンから送られてきたデータに応じて、返すデータを変える処理を書く
 緑、赤の閾値調整
@@ -18,6 +17,12 @@ import ustruct
 ボールがあるべき y 座標の範囲を決めて、事前処理することでできるだけノイズを減らす
 int をシリアルに送る際には byte 型に変換が必要なのでそれを書く ok
 """
+
+led = LED("LED_BLUE")
+
+led.on();
+time.sleep_ms(500)
+led.off()
 
 
 sensor.reset()  # Reset and initialize the sensor.
@@ -39,7 +44,7 @@ model = ml.Model("trained")
 print(model)
 
 
-colors = [  
+colors = [
     (255, 0, 0),
     (0, 255, 0),
     (255, 255, 0),
@@ -56,7 +61,7 @@ def fomo_post_process(model, inputs, outputs):
     for i in range(oc):
         img = image.Image(outputs[0][0, :, :, i] * 255)
         blobs = img.find_blobs(
-        
+
             threshold_list, x_stride=1, area_threshold=1, pixels_threshold=1
         )
         for b in blobs:
@@ -70,23 +75,28 @@ def fomo_post_process(model, inputs, outputs):
 
 thre_red = (0, 30, 0, 30, -3, 25)
 thre_green = (15, 35, -14, -4, -4, 8)
-
+print("Start")
 clock = time.clock()
 while True:
     while uart.any() == 0:
         pass
-    OpType = int.from_bytes(UART.readchar(),'little')
+    OpType=int(uart.readchar())
+    # print(OpType)
     if OpType == 0:
+        led.on();
         medians = []
         victim_cnt = 0
         for i in range(10):
             img = sensor.snapshot()
             pred = model.predict([img], callback=fomo_post_process)
             Temp = []
-            for (x, y, w, h), score in pred[0]:
+            # print(pred)
+            if(len(pred)<3): continue
+
+            for (x, y, w, h), score in pred[2]:
                 center_x = math.floor(x + (w / 2))
                 center_y = math.floor(y + (h / 2))
-                Temp.append(tuple(center_x,center_y))
+                Temp.append((center_x,center_y))
             victim_cnt += len(Temp)
             Temp.sort()
             medians.append(Temp[len(Temp)//2][0])
@@ -96,17 +106,19 @@ while True:
             uart.write(ustruct.pack('B',medians[4]//10))
         else:
             uart.write(ustruct.pack('B',0))
-    elif OpType == 1:        
+        led.off()
+    elif OpType == 1:
         medians = []
         victim_cnt = 0
         for i in range(10):
             img = sensor.snapshot()
             pred = model.predict([img], callback=fomo_post_process)
             Temp = []
-            for (x, y, w, h), score in pred[0]:
+            if (len(pred)<2): continue
+            for (x, y, w, h), score in pred[1]:
                 center_x = math.floor(x + (w / 2))
                 center_y = math.floor(y + (h / 2))
-                Temp.append(tuple(center_x,center_y))
+                Temp.append((center_x,center_y))
             victim_cnt += len(Temp)
             Temp.sort()
             medians.append(Temp[len(Temp)//2][0])
@@ -116,7 +128,7 @@ while True:
             uart.write(ustruct.pack('B',medians[4]//10))
         else:
             uart.write(ustruct.pack('B',0))
-    else:
+    elif OpType==2 or OpType==3:
         image = sensor.snapshot()
         max_i = -1
         max_pixel = 0

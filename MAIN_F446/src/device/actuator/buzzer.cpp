@@ -175,3 +175,62 @@ void Buzzer::PlayMusic(Note *notes, int length, int bpm)
         beep(notes[i].note, notes[i].duration);
     }
 }
+
+void Buzzer::DetectedBlackBall()
+{
+    Note notes[] = {
+        {C5, 0.5},
+        {E5, 0.5},
+        {C5, 0.5},
+        {E5, 0.5},
+    };
+    PlayMusic(notes, 4, 200);
+}
+
+void Buzzer::DetectedSilverBall()
+{
+    Note notes[] = {
+        {C5, 0.5},
+        {E5, 0.5},
+        {C5, 0.5},
+        {E5, 0.5},
+        {C5, 0.5},
+        {E5, 0.5},
+    };
+    PlayMusic(notes, 6, 200);
+}
+
+void Buzzer::DetectedGreenCorner()
+{
+    Note notes[] = {
+        {G5, 0.5},
+        {E5, 0.5},
+        {G5, 0.5},
+        {E5, 0.5},
+        {G5, 0.5},
+        {E5, 0.5},
+
+    };
+    PlayMusic(notes, 6, 200);
+}
+
+void Buzzer::DetectedRedCorner()
+{
+    Note notes[] = {
+        {G5, 0.5},
+        {E5, 0.5},
+        {G5, 0.5},
+        {E5, 0.5}};
+    PlayMusic(notes, 4, 200);
+}
+
+void Buzzer::NotFound()
+{
+    Note notes[] = {
+        {C5, 0.5},
+        {B4, 0.5},
+        {C5, 0.5},
+        {B4, 0.5},
+        {C5, 0.5}};
+    PlayMusic(notes, 5, 200);
+}

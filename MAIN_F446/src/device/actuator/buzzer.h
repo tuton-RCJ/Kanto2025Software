@@ -21,6 +21,11 @@ public:
     void PlayMusic(Note *notes, int length, int bpm);
     void ObjectDetected();
     void GreenMarker(int p);
+    void DetectedSilverBall();  
+    void DetectedBlackBall();
+    void DetectedGreenCorner();
+    void DetectedRedCorner();
+    void NotFound();
     volatile bool isDisabled = false;
 
 private:

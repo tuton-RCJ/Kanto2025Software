@@ -14,6 +14,7 @@ public:
     void stop();
     void drive(int driveSpeedPercent, int turnRate);
     void turn(int speed, int degree);
+    void straight(int speed, int distance);
 
     volatile bool isDisabled = false;
     const int baudrate = 1000000;

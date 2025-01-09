@@ -65,6 +65,11 @@ void setup()
 
   running = !digitalRead(StartSwitch);
 
+  // rescue
+  isRescue = true;
+  running = true;
+  RescueSetup();
+  
 }
 
 void loop()

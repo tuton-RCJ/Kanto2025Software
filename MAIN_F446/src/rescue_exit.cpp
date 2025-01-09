@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "./device/device.h"
 
 // communication
 extern HardwareSerial uart1;

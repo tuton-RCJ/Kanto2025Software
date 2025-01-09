@@ -31,13 +31,13 @@ int EntrancePositon = 2; // 入口が右側にあるかどうか 0: 右側, 1: �
 
 int NowAngle;
 int TargetX;         // 目標の x 座標
-const int midX = 16; // カメラの中央の x 座標
+int midX = 16;       // カメラの中央の x 座標
 bool InEntrance;     // 入口にいるかどうか
 bool VictimDetected; // 被災者が検出されたかどうか
 bool ZoneDetected;   // 避難ゾーンが検出されたかどうか
 bool NearbyVictim;   // 被災者の目の前にいるか
 bool HaveVictim;     // 被災者を持っているかどうか
-int HFOV = 56.6;     // OpenMV の水平視野角
+int HFOV = 60;       // OpenMV の水平視野角
 
 int PGain = 5; // カメラから送られてきた重心を基準に前に進む時のP 制御のゲイン
 
@@ -69,19 +69,12 @@ void RescueSetup()
     InEntrance = true;
     NowAngle = 0;
     uart6.begin(115200);
-    uart4.print("LightOn");
+    uart4.print("LightOff");
 }
 
 void RescueLoop()
 {
-    // tof.getTofValues();
-    // for (int i = 0; i < 7; i++)
-    // {
-    //     uart1.print(tof.tof_values[i]);
-    //     uart1.print(",");
-    // }
-    // uart1.println();
-    // return;
+
     // 生存者の救出
     if (SaveVictimCount < 2)
     {
@@ -99,6 +92,7 @@ void RescueLoop()
             {
                 if (GetVictimData(2))
                 {
+                    buzzer.DetectedGreenCorner();
                     if (SaveVictimZone[1] > MaxW)
                     {
                         MaxI = i;
@@ -113,14 +107,16 @@ void RescueLoop()
             {
                 sts3032.turn(50, MaxI * turnRate + XtoTurnRate(MaxX));
                 ZoneDetected = true;
+                buzzer.DetectedGreenCorner();
+                delay(1000);
             }
             else
             {
+                buzzer.NotFound();
                 GoNextDetection();
             }
             return;
         }
-
         // 生存者を回収済みでゾーンも見つけた
         else if (HaveVictim && ZoneDetected)
         {
@@ -129,11 +125,17 @@ void RescueLoop()
             {
                 sts3032.stop();
                 sts3032.turn(50, 180);
-                sts3032.drive(30, 0);
+                sts3032.drive(-30, 0);
+                delay(2000);
+                sts3032.stop();
                 BallDrop();
                 HaveVictim = false;
                 ZoneDetected = false;
                 SaveVictimCount++;
+                sts3032.drive(50, 0);
+                delay(200);
+                sts3032.stop();
+
                 return;
             }
             if (GetVictimData(2)) // 重心についてP制御
@@ -141,9 +143,8 @@ void RescueLoop()
                 Pcontrol(SaveVictimZone[0]);
             }
         }
-
         // 生存者を発見していない
-        if (!VictimDetected)
+        else if (!VictimDetected)
         {
             if (GetVictimData(0))
             {
@@ -154,11 +155,12 @@ void RescueLoop()
                 servo.AttachServo();
                 servo.ArmDown();
                 delay(1000);
+                buzzer.DetectedSilverBall();
             }
             else
             {
                 buzzer.NotFound();
-                sts3032.turn(50, 45);
+                sts3032.turn(50, 30);
             }
         }
 
@@ -181,6 +183,7 @@ void RescueLoop()
                 servo.HandClose();
                 delay(1000);
                 servo.ArmUp();
+                delay(1000);
                 servo.DetachServo();
                 SaveVictimCount++;
                 HaveVictim = true;
@@ -374,12 +377,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
 
 int XtoTurnRate(int x)
 {
-    return (x - midX) / (2 * midX) * HFOV;
+    return (HFOV * (midX - x) / (2 * midX));
 }
 
 void Pcontrol(int x)
 {
-    sts3032.drive(20, (x - midX) * PGain);
+    sts3032.drive(20, (midX - x) * PGain);
 }
 
 // ランダムな位置に移動する
@@ -451,7 +454,7 @@ void GoNextDetection()
 
 bool GetFrontObject()
 {
-    int frontthreshold = 120;
+    int frontthreshold = 100;
     tof.getTofValues();
     for (int i = 2; i < 7; i++)
     {

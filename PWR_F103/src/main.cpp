@@ -78,9 +78,6 @@ void AttachServo()
   servoHandRight.attach(ServoHandRight, 500, 2500);
   servoArmLeft.attach(ServoArmLeft, 500, 2500);
   servoArmRight.attach(ServoArmRight, 470, 2500);
-
-  servoBasketLeft.attach(ServoBasketLeft, 500, 2500);
-  servoBasketRight.attach(ServoBasketRight, 500, 2500);
 }
 
 void DetachServo()
@@ -89,14 +86,12 @@ void DetachServo()
   servoHandRight.detach();
   servoArmLeft.detach();
   servoArmRight.detach();
-  servoBasketLeft.detach();
-  servoBasketRight.detach();
 }
 
 void LightOn()
 {
 
-  for(int i=0;i<strip.numPixels();i++)
+  for (int i = 0; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, strip.Color(255, 255, 0));
   }
@@ -105,7 +100,7 @@ void LightOn()
 
 void LightOff()
 {
-  for(int i=0;i<strip.numPixels();i++)
+  for (int i = 0; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, strip.Color(0, 0, 0));
   }
@@ -126,6 +121,8 @@ void setup()
   strip.setBrightness(255);
 
   AttachServo();
+  servoBasketLeft.attach(ServoBasketLeft, 500, 2500);
+  servoBasketRight.attach(ServoBasketRight, 500, 2500);
   BasketClose();
   HandClose();
   ArmUp();

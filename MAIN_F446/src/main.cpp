@@ -148,7 +148,7 @@ void onStartInterrupt()
 {
   running = true;
   hasReset = false;
-  isRescue = false;
+  isRescue = true;
   buzzer.isDisabled = false;
   sts3032.isDisabled = false;
 }
@@ -157,7 +157,7 @@ void onStopInterrupt()
 {
   running = false;
   hasReset = false;
-  isRescue = false;
+  isRescue = true;
   buzzer.isDisabled = true;
   sts3032.isDisabled = true;
   sts3032.stop();

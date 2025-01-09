@@ -69,17 +69,6 @@ void setup()
 
 void loop()
 {
-  line.read();
-  for(int i=0;i<3;i++){
-    uart1.print(line.colorL[i]);
-    uart1.print(",");
-  }
-  for(int i=0;i<3;i++){
-    uart1.print(line.colorR[i]);
-    uart1.print(",");
-  }
-  uart1.println();
-  return;
 
   if (!running)
   {

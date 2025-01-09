@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "Servo.h"
 #include "tof.h"
+#include <Adafruit_NeoPixel.h>
 
 #define ServoHandLeft PA1
 #define ServoHandRight PA0
@@ -11,6 +12,10 @@
 
 #define I2C_SCL PB6
 #define I2C_SDA PB7
+
+#define NeoPin PB0
+
+Adafruit_NeoPixel strip(7, NeoPin, NEO_GRB + NEO_KHZ800);
 
 ToF tof(PA15, PB15);
 
@@ -88,6 +93,25 @@ void DetachServo()
   servoBasketRight.detach();
 }
 
+void LightOn()
+{
+
+  for(int i=0;i<strip.numPixels();i++)
+  {
+    strip.setPixelColor(i, strip.Color(255, 255, 0));
+  }
+  strip.show();
+}
+
+void LightOff()
+{
+  for(int i=0;i<strip.numPixels();i++)
+  {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+}
+
 void setup()
 {
 
@@ -97,12 +121,18 @@ void setup()
   tof.init();
   delay(100);
 
+  strip.begin();
+  strip.show();
+  strip.setBrightness(255);
+
   AttachServo();
   BasketClose();
   HandClose();
   ArmUp();
   delay(1000);
   DetachServo();
+
+  LightOn();
 }
 
 void loop()
@@ -117,33 +147,51 @@ void loop()
   uart3.print(" ");
   uart3.println(tof.tof_values[1]);
 
-  if(uart3.available()){
+  if (uart3.available())
+  {
     String data = uart3.readStringUntil('\n');
     data.trim();
-    if(data=="HandClose"){
+    if (data == "HandClose")
+    {
       HandClose();
     }
-    if(data=="HandOpen"){
+    if (data == "HandOpen")
+    {
       HandOpen();
     }
-    if(data=="ArmUp"){
+    if (data == "ArmUp")
+    {
       ArmUp();
     }
-    if(data=="ArmDown"){
+    if (data == "ArmDown")
+    {
       ArmDown();
     }
-    if(data=="BasketClose"){
+    if (data == "BasketClose")
+    {
       BasketClose();
     }
-    if(data=="BasketOpen"){
+    if (data == "BasketOpen")
+    {
       BasketOpen();
     }
-    if(data=="AttachServo"){
+    if (data == "AttachServo")
+    {
       AttachServo();
     }
-    if(data=="DetachServo"){
+    if (data == "DetachServo")
+    {
       DetachServo();
     }
+    if (data == "LightOn")
+    {
+      LightOn();
+    }
+    if (data == "LightOff")
+    {
+      LightOff();
+    }
+
     Serial1.print(data);
   }
   // ArmDown();

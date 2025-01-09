@@ -5,8 +5,6 @@
 #define I2C_SDA PB7
 #define I2C_SCL PB6
 
-
-
 HardwareSerial uart1(PA10, PA9);              // USB
 HardwareSerial uart2(PA3, PA2);               // LINE BOARD
 HardwareSerial uart3(PC_11_ALT1, PC_10_ALT1); // STS3032
@@ -17,13 +15,10 @@ Buzzer buzzer(PB1);
 STS3032 sts3032(&uart3);
 Microservo servo(&uart4);
 
-
 LoadCell loadcell(PC0, PC1);
 LineUnit line(&uart2);
 ToF tof(PA5, PA6, PA7, PA8, PA12, PA13, PA14);
 BNO055 bno(55, &Wire);
-
-
 
 volatile bool isRescue;
 
@@ -36,13 +31,12 @@ void init_i2c();
 
 // スタート・ストップ処理関連
 #define StartSwitch PA4
-volatile bool running = false; // 走行中かどうか
-volatile bool hasReset = false; // 割り込み直後の処理（サーボの位置リセット）を一度だけ行うためのフラグ
-void onSwitchInterrupt(); // スタート・ストップの割り込み処理
-void onStartInterrupt(); // スタート時の処理
-void onStopInterrupt(); // ストップ時の処理
+volatile bool running = false;                // 走行中かどうか
+volatile bool hasReset = false;               // 割り込み直後の処理（サーボの位置リセット）を一度だけ行うためのフラグ
+void onSwitchInterrupt();                     // スタート・ストップの割り込み処理
+void onStartInterrupt();                      // スタート時の処理
+void onStopInterrupt();                       // ストップ時の処理
 volatile unsigned long lastInterruptTime = 0; // チャタリング防止のための時間記録
-
 
 void setup()
 {
@@ -61,19 +55,32 @@ void setup()
   attachInterrupt(StartSwitch, onSwitchInterrupt, CHANGE);
 
   isRescue = false;
+  hasReset = true;
 
   sts3032.stop();
-  servo.initPos();
   buzzer.isDisabled = false;
   buzzer.boot();
 
   LineSetup();
 
   running = !digitalRead(StartSwitch);
+
 }
 
 void loop()
 {
+  line.read();
+  for(int i=0;i<3;i++){
+    uart1.print(line.colorL[i]);
+    uart1.print(",");
+  }
+  for(int i=0;i<3;i++){
+    uart1.print(line.colorR[i]);
+    uart1.print(",");
+  }
+  uart1.println();
+  return;
+
   if (!running)
   {
     if (!hasReset)
@@ -94,9 +101,6 @@ void loop()
       hasReset = true;
     }
   }
-
-
-
 
   if (!isRescue)
   {
@@ -131,7 +135,6 @@ void onSwitchInterrupt()
     return;
   }
   lastInterruptTime = millis();
-
 
   // スタート・ストップの切り替え
   if (running)

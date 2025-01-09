@@ -126,7 +126,7 @@ void CheckRed()
 
 void CheckGreen()
 {
-  if ((line._photoReflector[2] > threshold || line._photoReflector[12] > threshold) && line._frontPhotoReflector)
+  if ((line.LastColorL==0 || line.LastColorR==0) ) // && line._frontPhotoReflector)
   {
     int p = 0;
     if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)

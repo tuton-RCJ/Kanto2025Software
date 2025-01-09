@@ -91,6 +91,7 @@ void Buzzer::GreenMarker(int p)
             {G5, 0.5},
         };
         PlayMusic(notes, 2, 100);
+        return;
     }
     if (p > 1)
     {
@@ -100,6 +101,7 @@ void Buzzer::GreenMarker(int p)
             {E5, 0.5},
         };
         PlayMusic(notes, 3, 100);
+        return;
     }
     if (p > 2)
     {
@@ -110,6 +112,7 @@ void Buzzer::GreenMarker(int p)
             {C5, 0.5},
         };
         PlayMusic(notes, 4, 100);
+        return;
     }
 }
 

@@ -36,8 +36,8 @@ void HandClose()
 }
 void HandOpen()
 {
-  servoHandLeft.write(120);
-  servoHandRight.write(60);
+  servoHandLeft.write(140);
+  servoHandRight.write(40);
 }
 void ArmUp()
 {
@@ -72,7 +72,7 @@ void init_i2c()
   Wire.begin();
 }
 
-void AttachServo()
+void AttachArmServo()
 {
   servoHandLeft.attach(ServoHandLeft, 500, 2500);
   servoHandRight.attach(ServoHandRight, 500, 2500);
@@ -80,12 +80,24 @@ void AttachServo()
   servoArmRight.attach(ServoArmRight, 470, 2500);
 }
 
-void DetachServo()
+void AttachBasketServo()
+{
+  servoBasketLeft.attach(ServoBasketLeft, 500, 2500);
+  servoBasketRight.attach(ServoBasketRight, 500, 2500);
+}
+
+void DetachArmServo()
 {
   servoHandLeft.detach();
   servoHandRight.detach();
   servoArmLeft.detach();
   servoArmRight.detach();
+}
+
+void DetachaBasketServo()
+{
+  servoBasketLeft.detach();
+  servoBasketRight.detach();
 }
 
 void LightOn()
@@ -120,14 +132,14 @@ void setup()
   strip.show();
   strip.setBrightness(255);
 
-  AttachServo();
-  servoBasketLeft.attach(ServoBasketLeft, 500, 2500);
-  servoBasketRight.attach(ServoBasketRight, 500, 2500);
+  AttachArmServo();
+  AttachBasketServo();
   BasketClose();
   HandClose();
   ArmUp();
   delay(1000);
-  DetachServo();
+  DetachArmServo();
+  DetachaBasketServo();
 
   LightOn();
 }
@@ -172,13 +184,17 @@ void loop()
     {
       BasketOpen();
     }
-    if (data == "AttachServo")
-    {
-      AttachServo();
+    if(data == "AttachArmServo"){
+      AttachArmServo();
     }
-    if (data == "DetachServo")
-    {
-      DetachServo();
+    if(data == "DetachArmServo"){
+      DetachArmServo();
+    }
+    if(data == "AttachBasketServo"){
+      AttachBasketServo();
+    }
+    if(data == "DetachBasketServo"){
+      DetachaBasketServo();
     }
     if (data == "LightOn")
     {
@@ -188,16 +204,5 @@ void loop()
     {
       LightOff();
     }
-
-    Serial1.print(data);
   }
-  // ArmDown();
-  // delay(1000);
-  // HandClose();
-  // delay(1000);
-  // ArmUp();
-  // delay(1000);
-  // BasketOpen();
-  // delay(1000);
-  // BasketClose();
 }

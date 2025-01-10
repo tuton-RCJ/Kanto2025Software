@@ -35,23 +35,35 @@ void Microservo::BasketOpen()
     _serial->println("BasketOpen");
 }
 
-void Microservo::AttachServo()
+void Microservo::AttachArmServo()
 {
-    _serial->println("AttachServo");
+    _serial->println("AttachArmServo");
 }
 
-void Microservo::DetachServo()
+void Microservo::AttachBasketServo()
 {
-    _serial->println("DetachServo");
+    _serial->println("AttachBasketServo");
+}
+
+void Microservo::DetachArmServo()
+{
+    _serial->println("DetachArmServo");
+}
+
+void Microservo::DetachBasketServo()
+{
+    _serial->println("DetachBasketServo");
 }
 
 void Microservo::initPos()
 {
-    AttachServo();
-    BasketClose();
+    AttachArmServo();
+    AttachBasketServo();
+    delay(100);
     HandClose();
     ArmUp();
-    delay(500);
-    DetachServo();
+    BasketClose();
+    delay(1000);
+    DetachArmServo();
+    DetachBasketServo();
 }
-

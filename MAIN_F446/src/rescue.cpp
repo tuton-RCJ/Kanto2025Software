@@ -41,6 +41,8 @@ int HFOV = 60;       // OpenMV の水平視野角
 
 int PGain = 5; // カメラから送られてきた重心を基準に前に進む時のP 制御のゲイン
 
+bool EntranceWallRight = false; // 入口の右側に壁があるかどうか
+
 int SaveVictimXY[2]; // OpenMV から送られてきた生存者情報
 int DeadVictimXY[2]; // OpenMV から送られてきた死亡者情報
 int SaveVictimZone[2];
@@ -60,6 +62,13 @@ int XtoTurnRate(int x);
 
 bool GetFrontObject();
 
+void BasketLock();
+
+void ReadTopTof();
+int TopTof[2];
+
+void StringToIntValues(String str, int values[]);
+
 void RescueSetup()
 {
     VictimDetected = false;
@@ -74,9 +83,8 @@ void RescueSetup()
 
 void RescueLoop()
 {
-
     // 生存者の救出
-    if (SaveVictimCount < 2)
+    if (SaveVictimCount < 5)
     {
         // 生存者を回収済みでゾーン未検出
         if (HaveVictim && !ZoneDetected)
@@ -101,6 +109,7 @@ void RescueLoop()
                     }
                 }
                 sts3032.turn(50, turnRate);
+                delay(500);
             }
 
             if (MaxI != -1)
@@ -119,10 +128,11 @@ void RescueLoop()
         // 生存者を回収済みでゾーンも見つけた
         else if (HaveVictim && ZoneDetected)
         {
-            tof.getTofValues();
-            if (GetFrontObject()) // 正面にいる。
+            loadcell.read();
+            if (loadcell.values[0] > 200 && loadcell.values[1] > 200)
             {
                 sts3032.stop();
+                sts3032.straight(30, -50);
                 sts3032.turn(50, 180);
                 sts3032.drive(-30, 0);
                 delay(2000);
@@ -131,27 +141,48 @@ void RescueLoop()
                 HaveVictim = false;
                 ZoneDetected = false;
                 SaveVictimCount++;
-                sts3032.drive(50, 0);
-                delay(200);
-                sts3032.stop();
-
+                sts3032.straight(30, 100);
                 return;
             }
-            if (GetVictimData(2)) // 重心についてP制御
+
+            if (GetFrontObject())
             {
-                Pcontrol(SaveVictimZone[0]);
+                sts3032.drive(40, 0);
+            }
+            else
+            {
+                if (GetVictimData(2)) // 重心についてP制御
+                {
+                    Pcontrol(SaveVictimZone[0]);
+                }
             }
         }
         // 生存者を発見していない
         else if (!VictimDetected)
         {
+            if (InEntrance)
+            {
+                ReadTopTof();
+                if (TopTof[0] < TopTof[1])
+                {
+                    EntranceWallRight = true;
+                    buzzer.beep(440, 0.5);
+                }
+                else
+                {
+                    EntranceWallRight = false;
+                    buzzer.beep(880, 0.5);
+                }
+                InEntrance = false;
+            }
             if (GetVictimData(0))
             {
                 buzzer.DetectedSilverBall();
                 TargetX = SaveVictimXY[0];
                 VictimDetected = true;
                 sts3032.turn(50, XtoTurnRate(TargetX));
-                servo.AttachServo();
+                servo.AttachArmServo();
+                delay(1000);
                 servo.ArmDown();
                 delay(1000);
                 buzzer.DetectedSilverBall();
@@ -159,7 +190,14 @@ void RescueLoop()
             else
             {
                 buzzer.NotFound();
-                sts3032.turn(50, 30);
+                if (EntranceWallRight)
+                {
+                    sts3032.turn(50, -24);
+                }
+                else
+                {
+                    sts3032.turn(50, 24);
+                }
             }
         }
 
@@ -168,22 +206,28 @@ void RescueLoop()
         {
             if (!NearbyVictim)
             {
-                sts3032.drive(20, 0); // これで精度出なければ P 制御か何かする
-                tof.getTofValues();
                 if (GetFrontObject())
                 {
                     sts3032.stop();
                     buzzer.DetectedSilverBall();
                     NearbyVictim = true;
                 }
+                else
+                {
+                    sts3032.drive(30, 0);
+                }
             }
             else
             {
+                BasketLock();
+                delay(500);
                 servo.HandClose();
-                delay(1000);
+                delay(200);
+                servo.HandClose();
+                delay(200);
                 servo.ArmUp();
                 delay(1000);
-                servo.DetachServo();
+                servo.DetachArmServo();
                 HaveVictim = true;
                 NearbyVictim = false;
                 VictimDetected = false;
@@ -291,19 +335,26 @@ void RescueLoop()
 
 void BallDrop()
 {
-    servo.AttachServo();
     servo.BasketOpen();
     delay(2000);
     servo.BasketClose();
     delay(500);
-    servo.DetachServo();
+    servo.DetachBasketServo();
+}
+
+void BasketLock()
+{
+    servo.AttachBasketServo();
+    servo.BasketClose();
+    delay(500);
 }
 
 // uart6 には 1 or 0、 x座標 が送られる 避難ゾーンの場合は重心のX座標と幅が送られてくる
 bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存者避難ゾーン, 3: 死亡者避難ゾーン
 {
-    uart6.write(flag);
     uart6.flush();
+    uart6.write(flag);
+
     if (flag == 0) // Silver
     {
         while (uart6.available() < 1)
@@ -340,7 +391,6 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
     {
         while (uart6.available() < 1)
             ;
-
         int IsValid = uart6.read();
         if (IsValid == 0)
         {
@@ -462,4 +512,38 @@ bool GetFrontObject()
         }
     }
     return false;
+}
+
+void ReadTopTof()
+{
+    String str = uart4.readStringUntil('\n');
+    str = uart4.readStringUntil('\n');
+
+    StringToIntValues(str, TopTof);
+}
+
+void StringToIntValues(String str, int values[])
+{
+    int i = 0;
+    int j = 0;
+    while (i < str.length())
+    {
+        if (j > 2)
+        {
+            break;
+        }
+        if (str[i] == ' ')
+        {
+            i++;
+            continue;
+        }
+        String value = "";
+        while (str[i] != ' ' && i < str.length())
+        {
+            value += str[i];
+            i++;
+        }
+        values[j] = value.toInt();
+        j++;
+    }
 }

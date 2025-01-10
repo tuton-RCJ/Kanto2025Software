@@ -13,14 +13,15 @@ public:
     void ArmDown();
     void BasketClose();
     void BasketOpen();
-    void AttachServo();
-    void DetachServo();
+    void AttachArmServo();
+    void AttachBasketServo();
+    void DetachArmServo();
+    void DetachBasketServo();
 
     void initPos();
 
 private:
     HardwareSerial *_serial;
-
 };
 
 #endif

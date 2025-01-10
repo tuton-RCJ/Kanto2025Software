@@ -93,11 +93,11 @@ void STS3032::turn(int speed, int degree)
 
 /// @brief
 /// @param speed 0~100
-/// @param distance  cm
+/// @param distance  mm
 void STS3032::straight(int speed, int distance)
 {
     float speedPercent = constrain(speed / 100.0f, -1, 1);
-    float Distance1cmPerSpeed1 = 0.5f;
+    float Distance1cmPerSpeed1 = 0.36f;
     float time = distance / 100.0f / speedPercent * Distance1cmPerSpeed1 * (distance > 0 ? 1 : -1);
     drive(speed, 0);
     delay(time * 1000);

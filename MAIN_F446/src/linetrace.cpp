@@ -91,6 +91,7 @@ void LineTrace()
       isRescue = true;
       sts3032.stop();
       buzzer.EnterEvacuationZone();
+      sts3032.straight(50, 150);
       return;
     }
   }
@@ -126,7 +127,7 @@ void CheckRed()
 
 void CheckGreen()
 {
-  if ((line.LastColorL==0 || line.LastColorR==0) ) // && line._frontPhotoReflector)
+  if ((line.LastColorL == 0 || line.LastColorR == 0)) // && line._frontPhotoReflector)
   {
     int p = 0;
     if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)

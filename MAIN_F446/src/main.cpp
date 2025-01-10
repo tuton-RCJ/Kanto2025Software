@@ -40,8 +40,7 @@ volatile unsigned long lastInterruptTime = 0; // チャタリング防止のた�
 
 void setup()
 {
-  buzzer.isDisabled = false;
-  buzzer.boot();
+
   // init UART (others are initialized in their own classes)
   uart1.begin(115200); // USB for debug
   uart4.begin(115200); // PWR send servo command and receive tof sensor data
@@ -64,12 +63,11 @@ void setup()
   LineSetup();
 
   running = !digitalRead(StartSwitch);
-  
+  uart4.print("LightOff");
 }
 
 void loop()
 {
-
   if (!running)
   {
     if (!hasReset)

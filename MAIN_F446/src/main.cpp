@@ -29,15 +29,6 @@ extern void RescueLoop();
 
 void init_i2c();
 
-// スタート・ストップ処理関連
-#define StartSwitch PA4
-volatile bool running = false;                // 走行中かどうか
-volatile bool hasReset = false;               // 割り込み直後の処理（サーボの位置リセット）を一度だけ行うためのフラグ
-void onSwitchInterrupt();                     // スタート・ストップの割り込み処理
-void onStartInterrupt();                      // スタート時の処理
-void onStopInterrupt();                       // ストップ時の処理
-volatile unsigned long lastInterruptTime = 0; // チャタリング防止のための時間記録
-
 void setup()
 {
 
@@ -50,44 +41,20 @@ void setup()
   tof.init();
   bno.begin();
 
-  pinMode(StartSwitch, INPUT);
-  attachInterrupt(StartSwitch, onSwitchInterrupt, CHANGE);
-
-  isRescue = false;
-  hasReset = true;
-
-  sts3032.stop();
+  sts3032.isDisabled = false;
   buzzer.isDisabled = false;
-  buzzer.boot();
+  sts3032.stop();
 
   LineSetup();
 
-  running = !digitalRead(StartSwitch);
-  uart4.print("LightOff");
+  buzzer.boot();
 }
 
 void loop()
 {
-  if (!running)
-  {
-    if (!hasReset)
-    {
-      servo.initPos();
-      hasReset = true;
-    }
-    sts3032.stop();
-    buzzer.mute();
-
-    return;
-  }
-  else
-  {
-    if (!hasReset)
-    {
-      LineSetup();
-      hasReset = true;
-    }
-  }
+  // line.read();
+  // line.print(&uart1);
+  // return;
 
   if (!isRescue)
   {
@@ -112,44 +79,4 @@ void init_i2c()
   Wire.setSDA(I2C_SDA);
   Wire.setSCL(I2C_SCL);
   Wire.begin();
-}
-
-void onSwitchInterrupt()
-{
-  // チャタリング防止のデバウンス処理
-  if (millis() - lastInterruptTime < 100)
-  {
-    return;
-  }
-  lastInterruptTime = millis();
-
-  // スタート・ストップの切り替え
-  if (running)
-  {
-    onStopInterrupt();
-  }
-  else
-  {
-    onStartInterrupt();
-  }
-}
-
-void onStartInterrupt()
-{
-  running = true;
-  hasReset = false;
-  isRescue = false;
-  buzzer.isDisabled = false;
-  sts3032.isDisabled = false;
-}
-
-void onStopInterrupt()
-{
-  running = false;
-  hasReset = false;
-  isRescue = false;
-  buzzer.isDisabled = true;
-  sts3032.isDisabled = true;
-  sts3032.stop();
-  buzzer.mute();
 }

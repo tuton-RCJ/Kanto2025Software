@@ -24,6 +24,8 @@ public:
     /// @brief Time of R color detection 0,1,2,3=Black,White,Green,Red
     unsigned long colorRTime[4];
 
+    void print(HardwareSerial *serial);
+
 private:
     HardwareSerial *_serial;
 

@@ -54,7 +54,7 @@ void STS3032::stop()
     }
 }
 
-/// @brief 
+/// @brief
 /// @param driveSpeedPercent -100~100
 /// @param turnRate -100~100
 void STS3032::drive(int driveSpeedPercent, int turnRate)
@@ -99,7 +99,7 @@ void STS3032::straight(int speed, int distance)
     float speedPercent = constrain(speed / 100.0f, -1, 1);
     float Distance1cmPerSpeed1 = 0.36f;
     float time = distance / 100.0f / speedPercent * Distance1cmPerSpeed1 * (distance > 0 ? 1 : -1);
-    drive(speed, 0);
+    drive(speed * (distance > 0 ? 1 : -1), 0);
     delay(time * 1000);
     stop();
 }

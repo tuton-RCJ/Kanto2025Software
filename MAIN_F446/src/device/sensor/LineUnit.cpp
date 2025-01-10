@@ -93,11 +93,11 @@ void LineUnit::StringToIntValues(String str, int values[])
 void LineUnit::checkColor(int colorArr[], unsigned long colorTime[], int *LastColor)
 {
     int color = 0;                              // Black
-    if (colorArr[0] > 150 && colorArr[1] > 150) // White
+    if (colorArr[0] > 200 && colorArr[1] > 200) // White
     {
         color = 1;
     }
-    else if ((float)colorArr[0] *1.2f < colorArr[1]) // Green
+    else if ((float)colorArr[0] * 1.3f < colorArr[1]) // Green
     {
 
         color = 2;
@@ -106,10 +106,12 @@ void LineUnit::checkColor(int colorArr[], unsigned long colorTime[], int *LastCo
     {
         color = 3;
     }
-    else if(colorArr[0] < 80 && colorArr[1] < 80){
+    else if (colorArr[0] < 200 && colorArr[1] < 200)
+    {
         color = 0;
     }
-    else{
+    else
+    {
         color = 1;
     }
 
@@ -128,4 +130,30 @@ void LineUnit::checkColor(int colorArr[], unsigned long colorTime[], int *LastCo
             *LastColor += 5;
         }
     }
+}
+
+void LineUnit::print(HardwareSerial *serial)
+{
+    serial->print("photo:");
+    for (int i = 0; i < 15; i++)
+    {
+        serial->print(_photoReflector[i]);
+        serial->print(" ");
+    }
+    serial->print("F:");
+    serial->print(_frontPhotoReflector);
+    serial->print(" ");
+    serial->print("L:");
+    for (int i = 0; i < 3; i++)
+    {
+        serial->print(colorL[i]);
+        serial->print(" ");
+    }
+    serial->print("R:");
+    for (int i = 0; i < 3; i++)
+    {
+        serial->print(colorR[i]);
+        serial->print(" ");
+    }
+    serial->println();
 }

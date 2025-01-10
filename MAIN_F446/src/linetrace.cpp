@@ -19,10 +19,10 @@ extern bool isRescue;
 //----------------------------------------------
 
 // ライントレース PID用に変数を用意しているがP制御しかしていない
-int Kps[15] = {-8, -8, -6, -4, -3, -2, -2, 0, 2, 2, 3, 4, 6, 8, 8}; // 外側のゲインを大きくするための係数
+int Kps[15] = {-8, -5, -4, -4, -3, -2, -2, 0, 2, 2, 3, 4, 4, 5, 8}; // 外側のゲインを大きくするための係数
 int threshold = 800;                                                // 白と黒の閾値
 int silver_threshould = 100;                                        // 銀の閾値
-int Kp = 16;
+int Kp = 12;
 int Kd = 0;
 int Ki = 0;
 int lastError = 0;
@@ -47,9 +47,9 @@ void LineSetup()
   sumError = 0;
   isRescue = false;
   TurningObject = false;
-  servo.initPos();
+  // servo.initPos();
   line.init();
-  buzzer.boot();
+  line.setBrightness(80);
 }
 
 void LineLoop()
@@ -65,7 +65,7 @@ void LineLoop()
     TurnObject();
     return;
   }
-
+  line.print(&uart1);
   LineTrace();
   CheckRed();
   CheckGreen();
@@ -130,22 +130,32 @@ void CheckGreen()
   if ((line.LastColorL == 0 || line.LastColorR == 0)) // && line._frontPhotoReflector)
   {
     int p = 0;
-    if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)
+    if (line.LastColorL == 0)
     {
-      p += 1;
+      if (line.colorLTime[2] > 0 && millis() - line.colorLTime[2] < 400)
+      {
+        p += 1;
+      }
     }
-    if (line.colorRTime[2] > 0 && millis() - line.colorRTime[2] < 400)
+    if (line.LastColorR == 0)
     {
-      p += 2;
+      if (line.colorRTime[2] > 0 && millis() - line.colorRTime[2] < 400)
+      {
+        p += 2;
+      }
     }
+
     if (p > 0)
     {
       sts3032.stop();
       buzzer.GreenMarker(p);
+      int MoveToFront=60;
+      if(SlopeStatus==1){
+        MoveToFront=100;
+      }
       if (p == 1)
       {
-        sts3032.drive(40, 0);
-        delay(400);
+        sts3032.straight(40, MoveToFront);
         sts3032.turn(30, -80);
 
         // sts3032.drive(50, -85);
@@ -154,8 +164,7 @@ void CheckGreen()
       }
       if (p == 2)
       {
-        sts3032.drive(40, 0);
-        delay(400);
+        sts3032.straight(40, MoveToFront);
         sts3032.turn(30, 80);
         // sts3032.drive(50, 85);
         // delay(1000);
@@ -169,7 +178,6 @@ void CheckGreen()
     }
   }
 }
-
 void CheckObject()
 {
   loadcell.read();
@@ -177,8 +185,7 @@ void CheckObject()
   {
     sts3032.stop();
     buzzer.ObjectDetected();
-    sts3032.drive(-50, 0);
-    delay(500);
+    sts3032.straight(50, -40);
     sts3032.turn(50, 90);
     TurningObject = true;
   }

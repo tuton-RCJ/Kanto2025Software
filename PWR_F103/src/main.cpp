@@ -51,7 +51,7 @@ void ArmDown()
   servoArmRight.write(50);
   HandOpen();
   delay(300);
-  servoArmLeft.write(150);
+  servoArmLeft.write(155);
   servoArmRight.write(0);
 }
 
@@ -146,6 +146,22 @@ void setup()
 
 void loop()
 {
+  // AttachArmServo();
+  // AttachBasketServo();
+  // BasketClose();
+  // ArmDown();
+  // delay(1000);
+  // HandClose();
+  // delay(1000);
+  // ArmUp();
+  // delay(1000);
+  // DetachArmServo();
+  // BasketOpen();
+  // delay(1000);
+  // BasketClose();
+  // DetachaBasketServo();
+  // delay(1000);
+  // return;
 
   tof.getTofValues();
   // Serial1.print(tof.tof_values[0]);
@@ -184,16 +200,20 @@ void loop()
     {
       BasketOpen();
     }
-    if(data == "AttachArmServo"){
+    if (data == "AttachArmServo")
+    {
       AttachArmServo();
     }
-    if(data == "DetachArmServo"){
+    if (data == "DetachArmServo")
+    {
       DetachArmServo();
     }
-    if(data == "AttachBasketServo"){
+    if (data == "AttachBasketServo")
+    {
       AttachBasketServo();
     }
-    if(data == "DetachBasketServo"){
+    if (data == "DetachBasketServo")
+    {
       DetachaBasketServo();
     }
     if (data == "LightOn")

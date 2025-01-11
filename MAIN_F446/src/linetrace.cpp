@@ -19,7 +19,7 @@ extern bool isRescue;
 //----------------------------------------------
 
 // ライントレース PID用に変数を用意しているがP制御しかしていない
-int Kps[15] = {-8, -5, -4, -4, -3, -2, -2, 0, 2, 2, 3, 4, 4, 5, 8}; // 外側のゲインを大きくするための係数
+int Kps[15] = {-6, -5, -4, -4, -3, -2, -2, 0, 2, 2, 3, 4, 4, 5, 6}; // 外側のゲインを大きくするための係数
 int threshold = 800;                                                // 白と黒の閾値
 int silver_threshould = 100;                                        // 銀の閾値
 int Kp = 12;
@@ -34,7 +34,7 @@ void CheckRed();            // 赤テープ検知
 void CheckGreen();          // 緑マーカー検知
 
 // 障害物回避
-void CheckObject(); // ライントレース中、障害物があるか確認
+void CheckObject(); // ライントレース中、障害物があるか確かめる
 bool TurningObject; // 障害物回避中モード
 void TurnObject();  // 障害物回避中の処理
 
@@ -67,6 +67,8 @@ void LineLoop()
   }
   line.print(&uart1);
   LineTrace();
+  if (isRescue)
+    return;
   CheckRed();
   CheckGreen();
 
@@ -149,9 +151,10 @@ void CheckGreen()
     {
       sts3032.stop();
       buzzer.GreenMarker(p);
-      int MoveToFront=60;
-      if(SlopeStatus==1){
-        MoveToFront=100;
+      int MoveToFront = 60;
+      if (SlopeStatus == 1)
+      {
+        MoveToFront = 100;
       }
       if (p == 1)
       {

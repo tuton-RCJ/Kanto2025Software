@@ -25,9 +25,10 @@ extern bool isRescue;
 // todo tof の値は適当なのでものけんで調節する
 //      ブザー音を鳴らすようにする
 
-int SaveVictimCount = 0; // 生存者の救出数
-int DeadVictimCount = 0; // 死亡者の救出(?)数
 int EntrancePositon = 2; // 入口が右側にあるかどうか 0: 右側, 1: 左側, 2: 未確定
+
+int status = 0; // 0=銀を探す、1=黒を探す、2=脱出
+int rotation = 0;
 
 int NowAngle;
 int TargetX;         // 目標の x 座標
@@ -69,6 +70,10 @@ int TopTof[2];
 
 void StringToIntValues(String str, int values[]);
 
+bool RescueVictim(int target);
+
+void Kabeyoke(bool isWallleft);
+
 void RescueSetup()
 {
     VictimDetected = false;
@@ -77,260 +82,28 @@ void RescueSetup()
     HaveVictim = false;
     InEntrance = true;
     NowAngle = 0;
-    uart6.begin(115200);
-    uart4.print("LightOff");
+    buzzer.EnterEvacuationZone();
 }
 
 void RescueLoop()
 {
-    // 生存者の救出
-    if (SaveVictimCount < 5)
+
+    if (status < 2)
     {
-        // 生存者を回収済みでゾーン未検出
-        if (HaveVictim && !ZoneDetected)
+        if (!RescueVictim(status) && rotation > 720)
         {
-            // 　最も大きい角度のゾーンを検出
-            int MaxI = -1;
-            int MaxX = 0;
-            int MaxW = 0;
-
-            int turnRate = 45;
-
-            for (int i = 0; i < 360 / turnRate; i++)
+            status++;
+            buzzer.DetectedBlackBall();
+            if (status == 2)
             {
-                if (GetVictimData(2))
-                {
-                    buzzer.DetectedGreenCorner();
-                    if (SaveVictimZone[1] > MaxW)
-                    {
-                        MaxI = i;
-                        MaxX = SaveVictimZone[0];
-                        MaxW = SaveVictimZone[1];
-                    }
-                }
-                sts3032.turn(50, turnRate);
-                delay(500);
-            }
-
-            if (MaxI != -1)
-            {
-                sts3032.turn(50, MaxI * turnRate + XtoTurnRate(MaxX));
-                ZoneDetected = true;
-                buzzer.DetectedGreenCorner();
-                delay(1000);
-            }
-            else
-            {
-                buzzer.NotFound();
-            }
-            return;
-        }
-        // 生存者を回収済みでゾーンも見つけた
-        else if (HaveVictim && ZoneDetected)
-        {
-            loadcell.read();
-            if (loadcell.values[0] > 200 && loadcell.values[1] > 200)
-            {
-                sts3032.stop();
-                sts3032.straight(30, -50);
-                sts3032.turn(50, 180);
-                sts3032.drive(-30, 0);
-                delay(2000);
-                sts3032.stop();
-                BallDrop();
-                HaveVictim = false;
-                ZoneDetected = false;
-                SaveVictimCount++;
-                sts3032.straight(30, 100);
-                return;
-            }
-
-            if (GetFrontObject())
-            {
-                sts3032.drive(40, 0);
-            }
-            else
-            {
-                if (GetVictimData(2)) // 重心についてP制御
-                {
-                    Pcontrol(SaveVictimZone[0]);
-                }
-            }
-        }
-        // 生存者を発見していない
-        else if (!VictimDetected)
-        {
-            if (InEntrance)
-            {
-                ReadTopTof();
-                if (TopTof[0] < TopTof[1])
-                {
-                    EntranceWallRight = true;
-                    buzzer.beep(440, 0.5);
-                }
-                else
-                {
-                    EntranceWallRight = false;
-                    buzzer.beep(880, 0.5);
-                }
-                InEntrance = false;
-            }
-            if (GetVictimData(0))
-            {
-                buzzer.DetectedSilverBall();
-                TargetX = SaveVictimXY[0];
-                VictimDetected = true;
-                sts3032.turn(50, XtoTurnRate(TargetX));
-                servo.AttachArmServo();
-                delay(1000);
-                servo.ArmDown();
-                delay(1000);
-                buzzer.DetectedSilverBall();
-            }
-            else
-            {
-                buzzer.NotFound();
-                if (EntranceWallRight)
-                {
-                    sts3032.turn(50, -24);
-                }
-                else
-                {
-                    sts3032.turn(50, 24);
-                }
-            }
-        }
-
-        // 生存者を発見しているが未回収
-        else
-        {
-            if (!NearbyVictim)
-            {
-                if (GetFrontObject())
-                {
-                    sts3032.stop();
-                    buzzer.DetectedSilverBall();
-                    NearbyVictim = true;
-                }
-                else
-                {
-                    sts3032.drive(30, 0);
-                }
-            }
-            else
-            {
-                BasketLock();
-                delay(500);
-                servo.HandClose();
-                delay(200);
-                servo.HandClose();
-                delay(200);
-                servo.ArmUp();
-                delay(1000);
-                servo.DetachArmServo();
-                HaveVictim = true;
-                NearbyVictim = false;
-                VictimDetected = false;
+                // ExitSetup();
             }
         }
     }
-
-    // else if (DeadVictimCount < 1)
-    // {
-    //     if (HaveVictim && !ZoneDetected)
-    //     {
-    //         int MaxI = -1;
-    //         int MaxX = 0;
-    //         int MaxArea = 0;
-    //         for (int i = 0; i < 8; i++)
-    //         {
-    //             GetVictimData(3);
-    //             if (get<2>(SaveVictimZone) > MaxArea)
-    //             {
-    //                 MaxI = i;
-    //                 MaxX = get<0>(SaveVictimZone);
-    //                 MaxArea = get<2>(SaveVictimZone);
-    //             }
-    //         }
-    //         if (MaxI != -1)
-    //         {
-    //             TargetX = get<0>(SaveVictimZone);
-    //             sts3032.turn(50, MaxI * 45 + (MaxX - 12) * HFOV);
-    //             DetectedZone = true;
-    //         }
-    //         else
-    //         {
-    //             GoNextDetection();
-    //         }
-    //         return;
-    //     }
-    //     else if (HaveVictim && ZoneDetected)
-    //     {
-    //         sts3032.drive(50, 0);
-    //         tof.getTofValues();
-    //         if (tof.tof_values[2] < 100)
-    //         {
-    //             sts3032.stop();
-    //             sts3032.turn(50, 180);
-    //             servo.BasketOpen();
-    //             delay(1000);
-    //             servo.BasketClose();
-    //             HaveVictim = false;
-    //             ZoneDetected = false;
-    //             DeadVictimCount++;
-    //         }
-    //         return;
-    //     }
-    //     if (!VictimDetected)
-    //     {
-    //         int cnt = 0;
-    //         vector<int> DeadSaveVictimXList;
-    //         for (int i = 0; i < 10; i++)
-    //         {
-    //             GetVictimData(1);
-    //             if (DeadVictimList.size() != 0)
-    //             {
-    //                 TempDeadVictimXList.push_back(DeadVictimList[DeadVictimList.size() / 2].first);
-    //             }
-    //             cnt += DeadVictimList.size();
-    //         }
-    //         if (cnt < VictimThreshold)
-    //         {
-    //             VictimDetected = false;
-    //             GoNextDetection();
-    //         }
-    //         else
-    //         {
-    //             VictimDetected = true;
-    //             TargetX = TempDeadVictimXList[TempSaveVictimXList.size() / 2];
-    //             sts3032.turn(50, (TargetX - 12) * HFOV);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         if (!NearbyVictim)
-    //         {
-    //             sts3032.drive(40, 0);
-    //             tof.getTofValues();
-
-    //             if (tof.tof_values[2] < 60)
-    //             {
-    //                 sts3032.stop();
-    //                 buzzer.DetectedSilverBall();
-    //                 NearbyVictim = true;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             servo.HandClose();
-    //             servo.ArmUp();
-    //             DeadVictimCount++;
-    //             HaveVictim = true;
-    //             NearbyVictim = false;
-    //             VictimDetected = false;
-    //         }
-    //     }
-    // }
+    else
+    {
+        // ExitLoop();
+    }
 }
 
 void BallDrop()
@@ -452,7 +225,6 @@ void GoRandomPosition()
 
 void GoNextDetection()
 {
-
     if (InEntrance)
     {
         if (NowAngle < 90)
@@ -504,7 +276,7 @@ bool GetFrontObject()
 {
     int frontthreshold = 100;
     tof.getTofValues();
-    for (int i = 2; i < 7; i++)
+    for (int i = 2; i < 7; i += 2)
     {
         if (tof.tof_values[i] < frontthreshold)
         {
@@ -516,6 +288,7 @@ bool GetFrontObject()
 
 void ReadTopTof()
 {
+    uart4.flush();
     String str = uart4.readStringUntil('\n');
     str = uart4.readStringUntil('\n');
 
@@ -545,5 +318,207 @@ void StringToIntValues(String str, int values[])
         }
         values[j] = value.toInt();
         j++;
+    }
+}
+
+bool RescueVictim(int target)
+{
+
+    // 生存者を回収済みでゾーン未検出
+    if (HaveVictim && !ZoneDetected)
+    {
+        // 　最も大きい角度のゾーンを検出
+        int MaxI = -1;
+        int MaxX = 0;
+        int MaxW = 0;
+
+        int turnRate = 30;
+
+        for (int i = 0; i < 360 / turnRate; i++)
+        {
+            if (GetVictimData(target + 2))
+            {
+                buzzer.DetectedGreenCorner();
+                if (SaveVictimZone[1] > MaxW)
+                {
+                    MaxI = i;
+                    MaxX = SaveVictimZone[0];
+                    MaxW = SaveVictimZone[1];
+                }
+            }
+            sts3032.turn(30, turnRate);
+            delay(50);
+        }
+
+        if (MaxI != -1)
+        {
+            sts3032.turn(50, MaxI * turnRate + XtoTurnRate(MaxX));
+            ZoneDetected = true;
+            if (target == 0)
+            {
+
+                buzzer.DetectedGreenCorner();
+            }
+            else
+            {
+                buzzer.DetectedRedCorner();
+            }
+            delay(1000);
+        }
+        else
+        {
+            buzzer.NotFound();
+        }
+        return true;
+    }
+    // 生存者を回収済みでゾーンも見つけた
+    else if (HaveVictim && ZoneDetected)
+    {
+        loadcell.read();
+        if (loadcell.values[0] > 200 && loadcell.values[1] > 200)
+        {
+            sts3032.stop();
+            sts3032.straight(30, -50);
+            sts3032.turn(50, 180);
+            sts3032.drive(-30, 0);
+            delay(2000);
+            sts3032.stop();
+            BallDrop();
+            HaveVictim = false;
+            ZoneDetected = false;
+            sts3032.straight(30, 100);
+            return true;
+        }
+
+        if (GetFrontObject())
+        {
+            sts3032.drive(40, 0);
+        }
+        else
+        {
+            if (GetVictimData(target + 2)) // 重心についてP制御
+            {
+                Pcontrol(SaveVictimZone[0]);
+            }
+            else
+            {
+                sts3032.straight(20, 0);
+            }
+            ReadTopTof();
+            if (TopTof[0] < 80)
+            {
+                Kabeyoke(true);
+            }
+            else if (TopTof[1] < 80)
+            {
+                Kabeyoke(false);
+            }
+        }
+    }
+    // 生存者を発見していない
+    else if (!VictimDetected)
+    {
+        if (InEntrance)
+        {
+            tof.getTofValues();
+            if (tof.tof_values[0] < tof.tof_values[1])
+            {
+                EntranceWallRight = true;
+                buzzer.beep(440, 0.5);
+            }
+            else
+            {
+                EntranceWallRight = false;
+                buzzer.beep(880, 0.5);
+            }
+            InEntrance = false;
+        }
+        if (GetVictimData(target))
+        {
+            if (target == 0)
+            {
+
+                buzzer.DetectedSilverBall();
+            }
+            else
+            {
+                buzzer.DetectedBlackBall();
+            }
+            TargetX = SaveVictimXY[0];
+            VictimDetected = true;
+            sts3032.turn(50, XtoTurnRate(TargetX));
+            servo.AttachArmServo();
+            delay(500);
+            servo.ArmDown();
+            delay(1000);
+        }
+        else
+        {
+            if (EntranceWallRight)
+            {
+                sts3032.turn(50, -24);
+            }
+            else
+            {
+                sts3032.turn(50, 24);
+            }
+            rotation += 24;
+            return false;
+        }
+    }
+    // 生存者を発見しているが未回収
+    else
+    {
+        if (!NearbyVictim)
+        {
+            if (GetFrontObject())
+            {
+                sts3032.stop();
+                NearbyVictim = true;
+            }
+            else
+            {
+                if (GetVictimData(target))
+                {
+                    Pcontrol(SaveVictimXY[0]);
+                }
+                else
+                {
+                    sts3032.drive(20, 0);
+                }
+            }
+        }
+        else
+        {
+            BasketLock();
+            delay(500);
+            servo.HandClose();
+            delay(200);
+            servo.HandClose();
+            delay(200);
+            servo.ArmUp();
+            delay(1000);
+            servo.DetachArmServo();
+            HaveVictim = true;
+            NearbyVictim = false;
+            VictimDetected = false;
+        }
+    }
+    return true;
+}
+
+void Kabeyoke(bool isWallLeft)
+{
+    if (isWallLeft)
+    {
+        sts3032.turn(60, 40);
+        sts3032.straight(50, 30);
+        sts3032.turn(60, -40);
+    }
+    else
+    {
+        sts3032.turn(60, -40);
+        sts3032.straight(50, 30);
+        sts3032.turn(60, 40);
     }
 }

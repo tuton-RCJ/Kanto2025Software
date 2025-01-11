@@ -35,6 +35,7 @@ void setup()
   // init UART (others are initialized in their own classes)
   uart1.begin(115200); // USB for debug
   uart4.begin(115200); // PWR send servo command and receive tof sensor data
+  uart6.begin(115200);
 
   // init I2C sensors
   init_i2c();
@@ -52,9 +53,14 @@ void setup()
 
 void loop()
 {
-  // line.read();
-  // line.print(&uart1);
-  // return;
+  tof.getTofValues();
+  for (int i = 0; i < 7; i++)
+  {
+    uart1.print(tof.tof_values[i]);
+    uart1.print(" ");
+  }
+  uart1.println();
+  return;
 
   if (!isRescue)
   {

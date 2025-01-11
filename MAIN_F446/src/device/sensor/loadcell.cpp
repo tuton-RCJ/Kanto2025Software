@@ -25,3 +25,13 @@ void LoadCell::CaclurateMoment()
 {
     moment = degrees(atan2(values[0], values[1]));
 }
+
+void LoadCell::print(HardwareSerial *serial)
+{
+    for (int i = 0; i < 2; i++)
+    {
+        serial->print(values[i]);
+        serial->print(" ");
+    }
+    serial->println();
+}

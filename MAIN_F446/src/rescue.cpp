@@ -77,6 +77,8 @@ void Kabeyoke(bool isWallleft);
 extern void ExitSetup();
 extern void ExitLoop();
 
+unsigned long SetTimeOut;
+
 void RescueSetup()
 {
     VictimDetected = false;
@@ -131,11 +133,17 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
 {
     uart6.flush();
     uart6.write(flag);
+    SetTimeOut = millis() + 4000;
 
     if (flag == 0) // Silver
     {
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
 
         int IsValid = uart6.read();
         if (IsValid == 0)
@@ -143,7 +151,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
             return false;
         }
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
         int x = uart6.read();
         SaveVictimXY[0] = x;
         return true;
@@ -151,7 +164,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
     if (flag == 1) // Black
     {
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
 
         int IsValid = uart6.read();
         if (IsValid == 0)
@@ -159,7 +177,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
             return false;
         }
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
         int x = uart6.read();
         DeadVictimXY[0] = x;
         return true;
@@ -167,14 +190,24 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
     if (flag == 2) // Green
     {
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
         int IsValid = uart6.read();
         if (IsValid == 0)
         {
             return false;
         }
         while (uart6.available() < 2)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
         int x = uart6.read();
         int w = uart6.read();
         SaveVictimZone[0] = x;
@@ -183,7 +216,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
     if (flag == 3) // Red
     {
         while (uart6.available() < 1)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
 
         int IsValid = uart6.read();
         if (IsValid == 0)
@@ -191,7 +229,12 @@ bool GetVictimData(int flag) // flag = 0: 生存者, = 1: 死亡者, 2: 生存�
             return false;
         }
         while (uart6.available() < 2)
-            ;
+        {
+            if (millis() > SetTimeOut)
+            {
+                return false;
+            }
+        }
         int x = uart6.read();
         int w = uart6.read();
         DeadVictimZone[0] = x;

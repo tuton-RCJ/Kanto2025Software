@@ -83,6 +83,7 @@ void RescueSetup()
     InEntrance = true;
     NowAngle = 0;
     buzzer.EnterEvacuationZone();
+    line.setBrightness(0);
 }
 
 void RescueLoop()

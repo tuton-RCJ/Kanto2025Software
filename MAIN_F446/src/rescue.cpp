@@ -375,6 +375,22 @@ bool RescueVictim(int target)
     // 生存者を回収済みでゾーンも見つけた
     else if (HaveVictim && ZoneDetected)
     {
+
+
+        //上手くいくかわからん。緑の前に銀があったときにそれも拾う
+        if (target == 0)
+        {
+            if (GetVictimData(0))
+            {
+                HaveVictim = false;
+                VictimDetected = true;
+            }
+        }
+        //ここまで
+
+
+
+
         loadcell.read();
         if (loadcell.values[0] > 200 && loadcell.values[1] > 200)
         {

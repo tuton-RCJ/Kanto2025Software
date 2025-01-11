@@ -12,6 +12,7 @@ public:
     void init();
     int tof_values[7];
     void getTofValues();
+    void print(HardwareSerial *serial);
 
 private:
     int tof_pins[7];

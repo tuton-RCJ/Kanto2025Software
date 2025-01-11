@@ -74,6 +74,9 @@ bool RescueVictim(int target);
 
 void Kabeyoke(bool isWallleft);
 
+extern void ExitSetup();
+extern void ExitLoop();
+
 void RescueSetup()
 {
     VictimDetected = false;
@@ -97,13 +100,13 @@ void RescueLoop()
             buzzer.DetectedBlackBall();
             if (status == 2)
             {
-                // ExitSetup();
+                ExitSetup();
             }
         }
     }
     else
     {
-        // ExitLoop();
+        ExitLoop();
     }
 }
 
@@ -376,8 +379,7 @@ bool RescueVictim(int target)
     else if (HaveVictim && ZoneDetected)
     {
 
-
-        //上手くいくかわからん。緑の前に銀があったときにそれも拾う
+        // 上手くいくかわからん。緑の前に銀があったときにそれも拾う
         if (target == 0)
         {
             if (GetVictimData(0))
@@ -386,10 +388,7 @@ bool RescueVictim(int target)
                 VictimDetected = true;
             }
         }
-        //ここまで
-
-
-
+        // ここまで
 
         loadcell.read();
         if (loadcell.values[0] > 200 && loadcell.values[1] > 200)

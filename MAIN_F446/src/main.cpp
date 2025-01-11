@@ -53,15 +53,6 @@ void setup()
 
 void loop()
 {
-  tof.getTofValues();
-  for (int i = 0; i < 7; i++)
-  {
-    uart1.print(tof.tof_values[i]);
-    uart1.print(" ");
-  }
-  uart1.println();
-  return;
-
   if (!isRescue)
   {
     LineLoop();

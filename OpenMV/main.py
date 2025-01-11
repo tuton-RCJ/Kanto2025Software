@@ -9,28 +9,20 @@ import ustruct
 from machine import LED
 
 
-"""  todo
-輝度の自動調整をオフにする
-メインマイコンから送られてきたデータに応じて、返すデータを変える処理を書く
-緑、赤の閾値調整
-ボールを x 座標でソート
-ボールがあるべき y 座標の範囲を決めて、事前処理することでできるだけノイズを減らす
-int をシリアルに送る際には byte 型に変換が必要なのでそれを書く ok
-"""
-
 led = LED("LED_BLUE")
 
-led.on();
+led.on()
 time.sleep_ms(500)
-led.off()
-
-
 sensor.reset()  # Reset and initialize the sensor.
 sensor.set_pixformat(sensor.RGB565)  # Set pixel format to RGB565 (or GRAYSCALE)
 sensor.set_framesize(sensor.QVGA)  # Set frame size to QVGA (320x240)
-sensor.skip_frames(time=2000)  # Let the camera adjust.
+sensor.skip_frames(time=200)  # Let the camera adjust.
 sensor.set_auto_gain(False)
 sensor.set_auto_whitebal(False)
+sensor.set_auto_exposure(True)
+time.sleep(2)
+sensor.set_auto_exposure(False,exposure_us=5000)
+led.off()
 
 uart = UART(3,115200)
 uart.init(115200)
@@ -73,17 +65,22 @@ def fomo_post_process(model, inputs, outputs):
             nms.add_bounding_box(x, y, x + w, y + h, score, i)
     return nms.get_bounding_boxes()
 
-thre_red = (0, 30, 0, 30, -3, 25)
-thre_green = (15, 35, -14, -4, -4, 8)
+thre_red = (50, 80, 20, 50, -10, 30)
+thre_green = (0, 90, -40, -10, -20, 20)
 print("Start")
 clock = time.clock()
+IsExposure = False
 while True:
     while uart.any() == 0:
         pass
     OpType=int(uart.readchar())
     # print(OpType)
+    if OpType == 0 or OpType == 1:
+        if IsExposure:
+            sensor.set_auto_exposure(False,exposure_us=5000)
+            IsExposure = False
+            sensor.skip_frames(time=100)
     if OpType == 0:
-        led.on();
         medians = []
         victim_cnt = 0
         for i in range(10):
@@ -103,10 +100,10 @@ while True:
         if victim_cnt > 8:
             medians.sort()
             uart.write(ustruct.pack('B',1))
-            uart.write(ustruct.pack('B',medians[4]//10))
+
+            uart.write(ustruct.pack('B',medians[len(medians)//2]//10))
         else:
             uart.write(ustruct.pack('B',0))
-        led.off()
     elif OpType == 1:
         medians = []
         victim_cnt = 0
@@ -125,16 +122,29 @@ while True:
         if victim_cnt > 8:
             medians.sort()
             uart.write(ustruct.pack('B',1))
-            uart.write(ustruct.pack('B',medians[4]//10))
+            uart.write(ustruct.pack('B',medians[len(medians)//2]//10))
         else:
             uart.write(ustruct.pack('B',0))
     elif OpType==2 or OpType==3:
-        image = sensor.snapshot()
-        max_i = -1
+        if not IsExposure:
+            sensor.set_auto_exposure(False,exposure_us=50000)
+            IsExposure = True
+            sensor.skip_frames(time=100)
+        img = sensor.snapshot()
+        obj = img.find_blobs([thre_red if OpType == 3 else thre_green],merge=True,area_threshold=500,pixels_threshold=500)
         max_pixel = 0
-        for i,b in enumerate(img.find_blobs([thre_red if OpType == 2 else thre_green],pixels_threfold=1000,area_threshold=1000,merge=True)):
-            if b[4] > max_pixel:
+        max_i = -1
+        for i,b in enumerate(obj):
+
+            if max_pixel < b[4]:
+                max_pixel = b[4]
                 max_i = i
-                max_pixel = max_pixel
-        uart.write(ustruct.pack('B',b[5]))
-        uart.write(ustruct.pack('B',b[6]))
+        if max_pixel > 700:
+            uart.write(ustruct.pack('B',1))
+            uart.write(ustruct.pack('B',obj[max_i][5]//10))
+            uart.write(ustruct.pack('B',obj[max_i][2]//10))
+
+        else:
+            uart.write(ustruct.pack('B',0))
+    uart.flush()
+    led.off()
